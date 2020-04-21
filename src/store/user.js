@@ -1,4 +1,4 @@
-import { login } from '@/services/user'
+import { login } from '@/service/user'
 const state = {
   token: '',
   userInfo: {}

@@ -1,4 +1,4 @@
-import http from '@/middlewares/http'
+import http from '@/middleware/http'
 const login = async formModel => {
   return await http.post('/login', formModel)
 }
