@@ -71,7 +71,7 @@ export default {
               type: 'success',
               message: '登录成功'
             })
-            this.$router.push('/')
+            window.location.href = 'http://localhost:8080/'
           } else {
             this.$message({
               showClose: true,
@@ -95,8 +95,8 @@ export default {
   .login_box
     width 400px
     margin 100px auto
-    padding: 40px 70px
-    border: 2px solid #d1d1d1
+    padding 40px 70px
+    border 2px solid #d1d1d1
     .logo
       padding-bottom 20px
     .el-input__prefix

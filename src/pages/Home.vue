@@ -1,15 +1,37 @@
 <template>
-  <section class="layout">
+  <el-container>
+    <el-header>
+      Header
+    </el-header>
     <el-container>
-      <el-header>
-        <el-button type="info" @click="logout">退出</el-button>
-      </el-header>
+      <el-aside width="200px">
+        <Menu :menu-list="menuList"/>
+      </el-aside>
+      <el-main>
+        <router-view/>
+      </el-main>
     </el-container>
-  </section>
+    <el-footer>Footer</el-footer>
+  </el-container>
 </template>
 
 <script>
+import Menu from '@/components/Menu'
+import { getMenuList } from '@/services/menu'
 export default {
+  data () {
+    return {
+      menuList: []
+    }
+  },
+  components: {
+    Menu
+  },
+  created () {
+    getMenuList().then(resp => {
+      this.menuList = resp.data
+    })
+  },
   methods: {
     logout () {
       window.localStorage.removeItem('token')
@@ -38,4 +60,11 @@ export default {
 }
 </script>
 
-<style lang="stylus" scoped></style>
+<style lang="stylus" scoped>
+.el-header,.el-footer
+  background #B3C0D1
+.el-aside
+  background #D3DCE6
+.el-main
+  background #E9EEF3
+</style>
