@@ -3,14 +3,27 @@ import Router from 'vue-router'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
-
+import User from '@/pages/User'
+import Welcome from '@/pages/Welcome'
 Vue.use(Router)
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: Home
+    component: Home,
+    children: [
+      {
+        path: '/welcome',
+        name: 'welcome',
+        component: Welcome
+      },
+      {
+        path: '/users',
+        name: 'users',
+        component: User
+      }
+    ]
   }, {
     path: '/login',
     name: 'login',
@@ -28,24 +41,4 @@ const router = new Router({
   routes
 })
 
-const token = window.localStorage.getItem('token')
-// 路由守卫
-router.beforeEach((to, from, next) => {
-  if (to.path === '/login') {
-    if (!token) {
-      next()
-    } else {
-      next(from.path)
-    }
-  }
-  if (to.path === '/') {
-    if (!token) {
-      next('/login')
-    } else {
-      next()
-    }
-  } else {
-    next()
-  }
-})
 export default router

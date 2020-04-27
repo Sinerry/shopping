@@ -13,14 +13,11 @@ const mutations = {
 }
 const actions = {
   login: async ({ commit }, formModel) => {
-    const { data, meta } = await login(formModel)
-    if (meta.status === 200) {
-      const { token, ...userInfo } = data
-      commit('setToken', token)
-      commit('setUserInfo', userInfo)
-      return token
-    }
-    return null
+    const data = await login(formModel)
+    const { token, ...userInfo } = data
+    commit('setToken', token)
+    commit('setUserInfo', userInfo)
+    return token
   }
 }
 

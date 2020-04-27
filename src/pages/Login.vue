@@ -71,7 +71,9 @@ export default {
               type: 'success',
               message: '登录成功'
             })
-            window.location.href = 'http://localhost:8080/'
+            setTimeout(() => {
+              this.$router.push('/')
+            }, 1500)
           } else {
             this.$message({
               showClose: true,

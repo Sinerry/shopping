@@ -1,7 +1,7 @@
 <template>
   <el-submenu v-if="isExist" :index="menu.path">
     <template slot="title">
-      <i class="el-icon-location"></i>
+      <i :class="icons[menu.path] | prefix"></i>
       <span>{{ menu.authName }}</span>
     </template>
     <el-menu-item-group v-if="isExist">
@@ -20,10 +20,19 @@
 <script>
 export default {
   name: 'MenuItem',
+  created () {
+    this.icons = {
+      users: 'custom',
+      reports: 'data',
+      orders: 'order',
+      rights: 'check',
+      goods: 'shop'
+    }
+  },
   props: {
     menu: {
       type: Object,
-      default: () => ({}) 
+      default: () => ({})
     }
   },
   computed: {
@@ -36,6 +45,4 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-  .el-menu
-    color #fff
 </style>
