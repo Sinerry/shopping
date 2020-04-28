@@ -15,7 +15,7 @@
                     clearable
                     @clear="clearHandler"
                     @input="inputHandler">
-            <el-select v-model="searchType" slot="prepend" placeholder="请选择搜索类别">
+            <el-select v-model="searchType" slot="prepend" placeholder="请选择">
               <el-option label="姓名" value="SEARCH_By_Name"></el-option>
               <el-option label="角色" value="SEARCH_By_ROLE"></el-option>
             </el-select>
@@ -24,7 +24,42 @@
         </div>
       </el-col>
       <el-col :span="4">
-        <el-button type="primary">添加用户</el-button>
+        <el-button type="primary" @click="dialogVisible = true">添加用户</el-button>
+        <el-dialog
+          title="添加用户"
+          :visible.sync="dialogVisible"
+          width="40%"
+          @close="closeHandler"
+          @open="openHandler">
+
+          <el-form :model="model" status-icon :rules="rules" ref="addUserFormRef"
+                    label-width="0">
+            <el-form-item prop="username">
+              <el-input type="username" v-model="model.username" autocomplete="off" placeholder="用户名"></el-input>
+            </el-form-item>
+            <el-form-item prop="password">
+              <el-input type="password" v-model="model.password" autocomplete="off" placeholder="密码"></el-input>
+            </el-form-item>
+            <el-form-item prop="email">
+              <el-input v-model="model.email" placeholder="邮箱"></el-input>
+            </el-form-item>
+            <el-form-item prop="mobile">
+              <el-input v-model.number="model.mobile" placeholder="手机号"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-select v-model="model.rid" placeholder="请选择角色">
+                <el-option
+                    :label="role.roleName" :value="role.id"
+                    v-for="role in roles" :key="role.id">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
+          <span slot="footer" class="dialog-footer">
+              <el-button @click="dialogVisible = false">取消</el-button>
+              <el-button type="primary" @click="addUserHandler('addUserFormRef')">确定</el-button>
+            </span>
+        </el-dialog>
       </el-col>
     </el-row>
     <!-- 表格区域 -->
@@ -86,7 +121,7 @@
             <el-button type="danger" icon="el-icon-delete" size="mini" @click="delHandler(scope.row)"></el-button>
           </el-tooltip>
           <el-tooltip content="设置" placement="right" :enterable="false">
-            <el-button type="info" icon="el-icon-setting" size="mini" @click="delHandler(scope.row)"></el-button>
+            <el-button type="info" icon="el-icon-setting" size="mini" @click="settingHandler(scope.row)"></el-button>
           </el-tooltip>
         </template>
       </el-table-column>
@@ -101,16 +136,73 @@
       layout="total, sizes, prev, pager, next, jumper"
       :total="total">
     </el-pagination>
+    <el-dialog
+        title="更新用户"
+        :visible.sync="updateDialogVisible"
+        width="40%">
+      <el-form :model="updateFormModel" status-icon :rules="updateFormModelRule" ref="updateUserFormRef"
+            label-width="0">
+        <el-form-item>
+          <el-input placeholder="邮箱" :value="updateFormModel.id" readonly></el-input>
+        </el-form-item>
+        <el-form-item prop="email">
+          <el-input v-model="updateFormModel.email" placeholder="邮箱"></el-input>
+        </el-form-item>
+        <el-form-item prop="mobile">
+          <el-input v-model.number="updateFormModel.mobile" placeholder="手机号"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-select v-model="updateFormModel.rid" placeholder="请选择角色">
+            <el-option
+                :label="role.roleName" :value="role.id"
+                v-for="role in roles" :key="role.id"
+                :selected="updateFormModel.rid === role.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="updateDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="editConfirmHandler">确定</el-button>
+      </span>
+    </el-dialog>
   </section>
 </template>
 
 <script>
-import { getUserList, toggleUserState } from '@/services/user'
+import {
+  getUserList, toggleUserState, addUser,
+  getRoleList, getUserById, updateUser,
+  delUserById
+} from '@/services/user'
 import { debounce } from '@/assets/js/dom'
 const PAGE_NUM = 1
 const PAGE_SIZE = 2
 export default {
   methods: {
+    settingHandler (row) {
+    },
+    resetAddUserDialogForm () {
+      this.$refs.addUserFormRef.resetFields()
+    },
+    closeHandler () {
+      this.resetAddUserDialogForm()
+    },
+    getRoleList () {
+      getRoleList().then(resp => {
+        this.roles = resp
+      })
+    },
+    openHandler () {
+      this.getRoleList()
+    },
+    addUserHandler (addUserFormRef) {
+      this.$refs[addUserFormRef].validate(async valid => {
+        if (!valid || !this.model.rid) return
+        await addUser(this.model)
+        this.getUserList()
+      })
+    },
     sizeChangeHandler (pagesize) {
       this.queryInfo.pagesize = pagesize
       this.getUserList()
@@ -128,6 +220,7 @@ export default {
     inputHandler: debounce(function () {
       this.search()
     }),
+    // 搜索
     search () {
       const { keyword } = this
       if (!keyword.trim()) {
@@ -151,11 +244,40 @@ export default {
       this.queryInfo.query = ''
       this.getUserList()
     },
-    editHandler (row) {
-      console.log(row)
+    async editHandler (row) {
+      this.updateDialogVisible = true
+      await this.getRoleList()
+      const ret = await getUserById(row.id)
+      Object.keys(this.updateFormModel).forEach(key => {
+        this.updateFormModel[key] = ret[key]
+      })
+    },
+    editConfirmHandler () {
+      this.updateDialogVisible = false
+      updateUser(this.updateFormModel.id, this.updateFormModel).then(() => {
+        this.$message.success('更新成功')
+        this.getUserList()
+      })
     },
     delHandler (row) {
-      console.log(row)
+      this.$confirm('确定删除该用户么, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        delUserById(row.id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.getUserList()
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     },
     searchHandler () {
       this.search()
@@ -171,6 +293,42 @@ export default {
     this.getUserList()
   },
   data () {
+    const validateUserName = (rule, value, cb) => {
+      if (!value) {
+        cb(new Error('用户名不能为空'))
+      } else if (!/^\w{4,15}$/.test(value)) {
+        cb(new Error('用户名长度在4-15之间，由字母、数字、下划线组成'))
+      } else {
+        cb()
+      }
+    }
+    const validatePassword = (rule, value, cb) => {
+      if (!value) {
+        cb(new Error('密码不能为空'))
+      } else if (!/^\w{5,15}$/.test(value)) {
+        cb(new Error('密码长度在6-16之间，由任意字符组成'))
+      } else {
+        cb()
+      }
+    }
+    const validateEmail = (rule, value, cb) => {
+      if (!value) {
+        cb(new Error('邮箱不能为空'))
+      } else if (!/\w{1,20}@([1-9a-z]{2,}\.[a-z]{3,})+/.test(value)) {
+        cb(new Error('邮箱格式不对'))
+      } else {
+        cb()
+      }
+    }
+    const validateMobile = (rule, value, cb) => {
+      if (!value) {
+        cb(new Error('手机号不能为空'))
+      } else if (!/^1[3-9]\d{9}$/.test(value)) {
+        cb(new Error('手机必须由11位数字组成'))
+      } else {
+        cb()
+      }
+    }
     return {
       tableData: [],
       keyword: '',
@@ -181,7 +339,33 @@ export default {
         query: '',
         pagenum: PAGE_NUM,
         pagesize: PAGE_SIZE
-      }
+      },
+      dialogVisible: false,
+      roles: [],
+      model: {
+        username: '',
+        password: '',
+        email: '',
+        mobile: '',
+        rid: ''
+      },
+      rules: {
+        username: [{ validator: validateUserName, trigger: 'blur' }],
+        password: [{ validator: validatePassword, trigger: 'blur' }],
+        email: [{ validator: validateEmail, trigger: 'blur' }],
+        mobile: [{ validator: validateMobile, trigger: 'blur' }]
+      },
+      updateFormModel: {
+        rid: -1,
+        id: '',
+        mobile: '',
+        email: ''
+      },
+      updateFormModelRule: {
+        mobile: [{ validator: validateMobile, trigger: 'blur' }],
+        email: [{ validator: validateEmail, trigger: 'blur' }]
+      },
+      updateDialogVisible: false
     }
   }
 }
