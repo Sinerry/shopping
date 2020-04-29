@@ -58,6 +58,7 @@ const updateUser = async (userId, params) => {
 const delUserById = async userId => {
   return await http.delete(`/users/${userId}`)
 }
+
 export {
   login,
   getUserList,

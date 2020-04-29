@@ -12,6 +12,7 @@ const routes = [
     path: '/',
     name: 'home',
     component: Home,
+    redirect: '/login',
     children: [
       {
         path: '/welcome',
@@ -40,5 +41,16 @@ const router = new Router({
   base: process.env.BASE_URL,
   routes
 })
-
+const token = window.localStorage.getItem('token')
+router.beforeEach((to, from, next) => {
+  if (to.path === '/') {
+    if (!token) {
+      next()
+    } else {
+      next('/login')
+    }
+  } else {
+    next()
+  }
+})
 export default router
